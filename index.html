@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth bg-[#0c0805] text-white">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PixelCraft Studio — Professional Web Image Editor &amp; Filter Engine</title>
+
+  <link rel="icon" type="image/svg+xml"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%23e08a3c'/><text x='50%' y='68%' font-size='60' font-weight='900' fill='white' text-anchor='middle' font-family='sans-serif'>C</text></svg>">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.9.0/fonts/remixicon.css" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'] },
+          colors: {
+            amberGlow: '#e08a3c',
+            wine: { DEFAULT: '#881337', hover: '#9f1239', dark: '#4c0519' }
+          }
+        }
+      }
+    }
+  </script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+  <style>
+    /* Complete Scrollbar Removal across all browsers */
+    html, body {
+      overflow-x: hidden;
+      scrollbar-width: none; /* Firefox */
+      -ms-overflow-style: none; /* IE/Edge */
+    }
+    html::-webkit-scrollbar, body::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
+    }
+
+    /* Custom Cursor Follower Styles */
+    #cursor-dot {
+      pointer-events: none;
+      transform: translate3d(-50%, -50%, 0);
+      transition: opacity 0.25s ease;
+      will-change: transform;
+    }
+
+    #cursor-follower {
+      pointer-events: none;
+      transform: translate3d(-50%, -50%, 0);
+      transition: opacity 0.25s ease, border-color 0.25s ease, background-color 0.25s ease, box-shadow 0.25s ease;
+      will-change: transform;
+    }
+
+    /* Full-frame warm orange studio backdrop (matches reference) */
+    .luxury-studio-bg {
+      background-color: #7c3a0a;
+      background-image:
+        radial-gradient(ellipse 70% 80% at 52% 42%, #f59a3a 0%, #e8801f 28%, #b85a0f 55%, #6b300a 82%, #3d1b06 100%),
+        radial-gradient(circle 500px at 8% 20%, rgba(255, 190, 90, 0.25) 0%, transparent 65%);
+    }
+
+    /* Giant background word: LIGHT weight, white → fading amber */
+    .giant-bg-typography {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: clamp(5rem, 19.5vw, 22rem);
+      font-weight: 300;
+      letter-spacing: 0.12em;
+      line-height: 0.9;
+      user-select: none;
+      pointer-events: none;
+      white-space: nowrap;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.97) 0%, rgba(255, 255, 255, 0.82) 55%, rgba(255, 214, 170, 0.45) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Seamless Studio Cutout Mask: zero drop-shadow, zero gray haze, soft edge & bottom blend */
+    .model-cutout {
+      -webkit-mask-image: 
+        linear-gradient(to bottom, #000 0%, #000 72%, rgba(0,0,0,0.6) 86%, rgba(0,0,0,0) 100%),
+        radial-gradient(ellipse 70% 86% at 50% 48%, #000 55%, rgba(0,0,0,0.9) 70%, rgba(0,0,0,0.2) 88%, transparent 100%);
+      -webkit-mask-composite: source-in;
+      mask-image: 
+        linear-gradient(to bottom, #000 0%, #000 72%, rgba(0,0,0,0.6) 86%, rgba(0,0,0,0) 100%),
+        radial-gradient(ellipse 70% 86% at 50% 48%, #000 55%, rgba(0,0,0,0.9) 70%, rgba(0,0,0,0.2) 88%, transparent 100%);
+      mask-composite: intersect;
+      background: transparent !important;
+      border: none !important;
+      outline: none !important;
+      box-shadow: none !important;
+      filter: none !important;
+    }
+
+    /* Fallback when cutout fails: feather the photo edges, text sits in front */
+    .model-feather {
+      -webkit-mask-image:
+        linear-gradient(to bottom, #000 0%, #000 64%, rgba(0, 0, 0, 0) 98%),
+        radial-gradient(ellipse 60% 85% at 50% 45%, #000 40%, rgba(0, 0, 0, 0.6) 65%, transparent 100%);
+      -webkit-mask-composite: source-in;
+      mask-image:
+        linear-gradient(to bottom, #000 0%, #000 64%, rgba(0, 0, 0, 0) 98%),
+        radial-gradient(ellipse 60% 85% at 50% 45%, #000 40%, rgba(0, 0, 0, 0.6) 65%, transparent 100%);
+      mask-composite: intersect;
+      mix-blend-mode: multiply;
+    }
+
+    .hero-fallback #bg-text-wrap {
+      z-index: 12;
+      opacity: 0.55;
+    }
+
+    .glass-amber {
+      background: rgba(180, 83, 9, 0.28);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 220, 160, 0.35);
+    }
+
+    .glass-white {
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+
+    .glass-dark {
+      background: rgba(60, 25, 8, 0.45);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #e08a3c;
+      border: 2px solid #fff;
+      cursor: pointer;
+      box-shadow: 0 0 8px rgba(224, 138, 60, 0.8);
+      transition: transform 0.1s ease;
+    }
+
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+  </style>
+</head>
+
+<body
+  class="bg-[#0c0805] text-white selection:bg-amber-600 selection:text-white min-h-screen overflow-x-hidden font-sans">
+
+  <!-- Header -->
+  <header
+    class="fixed top-0 left-0 w-full z-50 px-6 sm:px-12 py-5 flex items-center justify-between backdrop-blur-md bg-[#0c0805]/35 border-b border-white/5">
+    <a href="./index.html" class="flex items-center gap-3 group">
+      <div
+        class="w-9 h-9 rounded-full bg-gradient-to-tr from-amber-600 to-amber-400 p-[1.5px] flex items-center justify-center transition-transform group-hover:scale-105">
+        <div class="w-full h-full bg-[#0c0805] rounded-full flex items-center justify-center">
+          <i class="ri-aperture-line text-amber-400 text-lg"></i>
+        </div>
+      </div>
+      <span class="text-lg font-extrabold tracking-tight text-white/95">Pixel<span
+          class="text-amber-400">Craft</span></span>
+    </a>
+
+    <nav class="hidden md:flex items-center gap-9 text-sm font-medium text-white/80">
+      <a href="#features" class="hover:text-white transition-colors">Features</a>
+      <a href="#playground" class="hover:text-white transition-colors">Presets</a>
+      <a href="./editor.html" class="hover:text-white transition-colors">Studio</a>
+      <a href="#features" class="hover:text-white transition-colors">About</a>
+      <a href="#contacts" class="hover:text-white transition-colors">Contact</a>
+    </nav>
+
+    <div class="flex items-center gap-3.5">
+      <a href="./editor.html"
+        class="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-wine hover:bg-wine-hover text-white text-sm font-bold shadow-lg shadow-wine-dark/50 border border-white/10 transition-all hover:scale-105 active:scale-95">
+        <span>Launch Studio</span>
+        <i class="ri-arrow-right-up-line text-sm font-bold"></i>
+      </a>
+    </div>
+  </header>
+
+  <!-- ===================== HERO ===================== -->
+  <section id="hero"
+    class="luxury-studio-bg relative h-screen max-h-screen pt-20 md:pt-24 pb-4 md:pb-6 flex flex-col justify-between overflow-hidden select-none">
+
+    <!-- Layer 1: giant background word (BEHIND the model) -->
+    <div id="bg-text-wrap"
+      class="absolute inset-x-0 top-[54%] md:top-[56%] -translate-y-1/2 flex items-center justify-center pointer-events-none select-none z-[1] overflow-hidden">
+      <div id="giant-bg-text" class="giant-bg-typography uppercase">CREATIVE</div>
+    </div>
+
+    <!-- Layer 2: model (transparent cutout, sits IN FRONT of the word) -->
+    <div
+      class="absolute inset-x-0 bottom-0 top-14 z-10 flex items-end justify-center pointer-events-none overflow-hidden"
+      id="model-stage">
+      <div class="gs-model-container relative h-[78vh] md:h-[86vh] max-h-[860px] w-auto flex items-end justify-center">
+        <img id="hero-model-img"
+          class="model-cutout h-full w-auto max-w-[96vw] object-contain object-bottom select-none bg-transparent border-0 outline-none"
+          src="./assets/model-hero.png" alt="Featured Portrait Model">
+      </div>
+    </div>
+
+    <!-- Layer 3: top copy -->
+    <div
+      class="max-w-[1520px] w-full mx-auto px-6 sm:px-12 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start relative z-20 pt-2 md:pt-3">
+      <div class="lg:col-span-4 flex flex-col items-start gap-3.5 gs-hero-left">
+        <h1
+          class="text-xl sm:text-2xl md:text-[2.1rem] font-light uppercase tracking-wide text-white leading-[1.12] max-w-md">
+          Transform your visuals with pro filters &amp; studio tools
+        </h1>
+        <p class="text-xs sm:text-[13px] text-white/80 font-light leading-relaxed max-w-sm">
+          From <strong class="font-bold">tone &amp; exposure</strong> to <strong class="font-bold">precise
+            filters</strong> — tune colors and export studio-quality visuals in seconds, directly in your browser.
+        </p>
+        <a href="./editor.html"
+          class="inline-flex items-center gap-2.5 px-8 py-3 rounded-full bg-wine hover:bg-wine-hover text-white text-xs sm:text-sm font-medium border border-white/10 shadow-lg shadow-wine-dark/40 transition-all hover:scale-105 active:scale-95">
+          <span>Start Editing Free</span>
+        </a>
+      </div>
+
+      <div class="hidden lg:block lg:col-span-4 pointer-events-none"></div>
+
+      <div class="lg:col-span-4 flex flex-col items-start text-left gap-3.5 gs-hero-right lg:pl-8">
+        <h2 class="text-3xl sm:text-4xl md:text-[3rem] font-light uppercase tracking-tight text-white leading-[1.02]">
+          CREATIVE<br>STUDIO
+        </h2>
+        <!-- Typewriter Description Effect (Requirement 3) -->
+        <p id="typewriter-desc" class="text-xs sm:text-[13px] text-white/85 font-light leading-relaxed max-w-sm min-h-[58px]">
+          <span id="typed-text"></span><span id="typed-cursor" class="inline-block w-1 h-3.5 bg-amber-400 ml-0.5 animate-pulse align-middle"></span>
+        </p>
+      </div>
+    </div>
+
+    <!-- Layer 4: bottom badges -->
+    <div
+      class="max-w-[1520px] w-full mx-auto px-6 sm:px-12 grid grid-cols-1 sm:grid-cols-12 gap-6 items-end relative z-20 pb-2 md:pb-4">
+      <div class="sm:col-span-6 flex items-center gap-4 flex-wrap gs-hero-bottom-left">
+        <div
+          class="glass-amber rounded-2xl px-5 py-3.5 min-w-[145px] shadow-xl hover:scale-105 transition-transform duration-300">
+          <div class="flex items-center gap-1.5 text-[11px] font-bold text-amber-100/90 uppercase tracking-wider mb-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span><span>Core Filters</span>
+          </div>
+          <div class="text-2xl sm:text-3xl font-light text-white tracking-tight">10+ Realtime</div>
+        </div>
+        <div
+          class="glass-white rounded-2xl px-5 py-3.5 min-w-[145px] shadow-xl hover:scale-105 transition-transform duration-300">
+          <div class="flex items-center gap-1.5 text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span><span>Quality Loss</span>
+          </div>
+          <div class="text-2xl sm:text-3xl font-light text-gray-950 tracking-tight">0% Canvas</div>
+        </div>
+      </div>
+
+      <div class="sm:col-span-6 flex justify-start sm:justify-end gs-hero-bottom-right">
+        <div class="glass-dark rounded-2xl p-4 sm:p-5 max-w-xs shadow-2xl hover:border-white/30 transition-all">
+          <div class="flex items-center justify-between gap-4 mb-1.5">
+            <h4 class="text-sm font-light text-white tracking-wide">Your Studio for Visual Mastery</h4>
+            <div class="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-white text-xs">↗</div>
+          </div>
+          <p class="text-[11px] text-white/70 leading-relaxed mb-2.5">
+            Pure client-side GPU processing. Zero image uploads to external servers for 100% privacy and max resolution.
+          </p>
+          <div class="flex items-center gap-3 pt-2 border-t border-white/15">
+            <div class="flex -space-x-2">
+              <img class="w-6 h-6 rounded-full border border-black/50 object-cover"
+                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=80&q=80"
+                alt="User">
+              <img class="w-6 h-6 rounded-full border border-black/50 object-cover"
+                src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=80&q=80"
+                alt="User">
+              <img class="w-6 h-6 rounded-full border border-black/50 object-cover"
+                src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=80&q=80"
+                alt="User">
+            </div>
+            <span class="text-[11px] font-bold text-white/85">5,000+ Happy Creators</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== PLAYGROUND ===================== -->
+  <section class="py-24 bg-[#0e0a07] border-t border-white/5 relative z-30" id="playground">
+    <div class="max-w-7xl mx-auto px-6 sm:px-12">
+      <div class="text-center mb-16">
+        <span
+          class="text-xs font-bold uppercase tracking-widest text-amber-400 px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/20">Live
+          Interactive Engine</span>
+        <h2 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-white mt-3">Test Studio Filters Right Here
+        </h2>
+        <p class="text-white/60 text-sm sm:text-base mt-3 max-w-xl mx-auto">Drag the sliders below to experience
+          zero-latency GPU color grading directly on this live canvas.</p>
+      </div>
+
+      <div
+        class="bg-gradient-to-b from-white/[0.04] to-white/[0.01] border border-white/10 rounded-3xl p-6 sm:p-10 shadow-2xl backdrop-blur-xl">
+        <div
+          class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-6 mb-8 border-b border-white/10">
+          <div>
+            <h3 class="text-xl font-bold text-white flex items-center gap-2">
+              <i class="ri-equalizer-line text-amber-400"></i><span>Hardware-Accelerated CSS Filter Pipeline</span>
+            </h3>
+            <p class="text-xs text-white/50 mt-1">Select a sample photo to try the filters on</p>
+          </div>
+          <div class="flex items-center gap-2.5">
+            <button
+              class="sample-pick-btn active w-11 h-11 rounded-xl border-2 border-amber-400 overflow-hidden transition-all scale-105"
+              data-src="./assets/model-hero.png">
+              <img src="./assets/model-hero.png"
+                alt="Featured Model" class="w-full h-full object-cover">
+            </button>
+            <button
+              class="sample-pick-btn w-11 h-11 rounded-xl border border-white/20 overflow-hidden transition-all hover:scale-105"
+              data-src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1000&q=80">
+              <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=60"
+                alt="Sample 2" class="w-full h-full object-cover">
+            </button>
+            <button
+              class="sample-pick-btn w-11 h-11 rounded-xl border border-white/20 overflow-hidden transition-all hover:scale-105"
+              data-src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=1000&q=80">
+              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=60"
+                alt="Sample 3" class="w-full h-full object-cover">
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          <div
+            class="lg:col-span-7 bg-[#140e0a] rounded-2xl aspect-[16/11] border border-white/10 flex items-center justify-center overflow-hidden shadow-inner p-2 relative">
+            <img id="playground-viewport-img"
+              class="max-w-full max-h-full object-contain rounded-xl transition-all duration-75"
+              src="./assets/model-hero.png"
+              alt="Filter Preview">
+            <div class="absolute bottom-4 left-4 flex gap-2">
+              <button onclick="applyPlaygroundPreset('noir')"
+                class="px-3 py-1 rounded-full text-xs font-bold bg-black/60 hover:bg-black text-white border border-white/20 backdrop-blur-md">Noir
+                B&amp;W</button>
+              <button onclick="applyPlaygroundPreset('warm')"
+                class="px-3 py-1 rounded-full text-xs font-bold bg-amber-900/60 hover:bg-amber-800 text-amber-200 border border-amber-500/30 backdrop-blur-md">Warm
+                Sun</button>
+              <button onclick="applyPlaygroundPreset('cyber')"
+                class="px-3 py-1 rounded-full text-xs font-bold bg-purple-900/60 hover:bg-purple-800 text-purple-200 border border-purple-500/30 backdrop-blur-md">Cyberpunk</button>
+            </div>
+          </div>
+
+          <div class="lg:col-span-5 bg-white/[0.03] border border-white/10 rounded-2xl p-6 flex flex-col gap-4">
+            <div class="flex flex-col gap-1.5">
+              <div class="flex justify-between text-xs font-bold text-white/80"><span>Brightness</span><span
+                  class="text-amber-400 font-mono" id="pg-val-brightness">100%</span></div>
+              <input type="range"
+                class="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer outline-none"
+                id="pg-brightness" min="0" max="200" value="100">
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <div class="flex justify-between text-xs font-bold text-white/80"><span>Contrast</span><span
+                  class="text-amber-400 font-mono" id="pg-val-contrast">100%</span></div>
+              <input type="range"
+                class="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer outline-none" id="pg-contrast"
+                min="0" max="200" value="100">
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <div class="flex justify-between text-xs font-bold text-white/80"><span>Saturation</span><span
+                  class="text-amber-400 font-mono" id="pg-val-saturation">100%</span></div>
+              <input type="range"
+                class="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer outline-none"
+                id="pg-saturation" min="0" max="200" value="100">
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <div class="flex justify-between text-xs font-bold text-white/80"><span>Hue Rotate</span><span
+                  class="text-amber-400 font-mono" id="pg-val-huerotate">0°</span></div>
+              <input type="range"
+                class="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer outline-none"
+                id="pg-huerotate" min="0" max="360" value="0">
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <div class="flex justify-between text-xs font-bold text-white/80"><span>Sepia / Vintage</span><span
+                  class="text-amber-400 font-mono" id="pg-val-sepia">0%</span></div>
+              <input type="range"
+                class="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer outline-none" id="pg-sepia"
+                min="0" max="100" value="0">
+            </div>
+            <div class="flex gap-3 pt-3">
+              <button id="pg-reset-btn" type="button"
+                class="flex-1 py-3 px-4 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-bold transition-all text-center"><i
+                  class="ri-refresh-line"></i> Reset</button>
+              <a href="./editor.html"
+                class="flex-[2] py-3 px-6 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-black font-extrabold text-xs transition-all text-center shadow-lg shadow-amber-600/30 flex items-center justify-center gap-1.5">
+                <span>Launch Full Editor</span><i class="ri-arrow-right-line"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== FEATURES ===================== -->
+  <section class="py-24 bg-[#0a0705] relative z-30" id="features">
+    <div class="max-w-7xl mx-auto px-6 sm:px-12">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-white">Built For Speed, Privacy &amp; Quality
+        </h2>
+        <p class="text-white/60 text-sm sm:text-base mt-3 max-w-xl mx-auto">Everything you need for rapid photo
+          post-processing with zero installation.</p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div
+          class="bg-white/[0.02] border border-white/10 rounded-3xl p-8 hover:border-amber-400/40 hover:bg-white/[0.04] transition-all group">
+          <div
+            class="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 text-2xl mb-6 group-hover:scale-110 transition-transform">
+            <i class="ri-cpu-line"></i></div>
+          <h3 class="text-xl font-bold text-white mb-2">100% Client-Side GPU</h3>
+          <p class="text-sm text-white/60 leading-relaxed">All filtering algorithms execute locally via
+            hardware-accelerated CSS and HTML5 Canvas. No upload times, no latency.</p>
+        </div>
+        <div
+          class="bg-white/[0.02] border border-white/10 rounded-3xl p-8 hover:border-amber-400/40 hover:bg-white/[0.04] transition-all group">
+          <div
+            class="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 text-2xl mb-6 group-hover:scale-110 transition-transform">
+            <i class="ri-shield-check-line"></i></div>
+          <h3 class="text-xl font-bold text-white mb-2">Complete Privacy</h3>
+          <p class="text-sm text-white/60 leading-relaxed">Your personal photos and client assets never touch a remote
+            server or third-party cloud. What's on your machine stays on your machine.</p>
+        </div>
+        <div
+          class="bg-white/[0.02] border border-white/10 rounded-3xl p-8 hover:border-amber-400/40 hover:bg-white/[0.04] transition-all group">
+          <div
+            class="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 text-2xl mb-6 group-hover:scale-110 transition-transform">
+            <i class="ri-hd-line"></i></div>
+          <h3 class="text-xl font-bold text-white mb-2">Lossless Canvas Export</h3>
+          <p class="text-sm text-white/60 leading-relaxed">Exports preserve full natural dimensions up to 8K resolution
+            without compression artifacts or watermarks.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer class="border-t border-white/10 bg-[#080503] py-12 relative z-30" id="contacts">
+    <div class="max-w-7xl mx-auto px-6 sm:px-12 flex flex-col sm:flex-row justify-between items-center gap-6">
+      <div class="flex items-center gap-3">
+        <div
+          class="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-600 to-amber-400 p-[1px] flex items-center justify-center">
+          <div class="w-full h-full bg-[#080503] rounded-full flex items-center justify-center"><i
+              class="ri-aperture-line text-amber-400 text-sm"></i></div>
+        </div>
+        <span class="text-base font-bold text-white/90">Pixel<span class="text-amber-400">Craft</span> Studio</span>
+      </div>
+      <div class="text-xs text-white/50">© 2026 PixelCraft Studio All rights
+        reserved.</div>
+      <div class="flex items-center gap-5 text-lg text-white/70">
+        <a href="./editor.html" class="text-xs font-bold text-amber-400 hover:underline mr-2">Open Editor →</a>
+        <a href="#" class="hover:text-amber-400 transition-colors"><i class="ri-github-fill"></i></a>
+        <a href="#" class="hover:text-amber-400 transition-colors"><i class="ri-twitter-x-fill"></i></a>
+        <a href="#" class="hover:text-amber-400 transition-colors"><i class="ri-linkedin-fill"></i></a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Smooth Custom Mouse Follower Divs (Requirement 2) -->
+  <div id="cursor-dot" class="fixed top-0 left-0 w-2 h-2 bg-amber-400 rounded-full pointer-events-none z-[9999] opacity-0 hidden md:block shadow-[0_0_10px_rgba(245,158,11,1)]"></div>
+  <div id="cursor-follower" class="fixed top-0 left-0 w-9 h-9 border border-amber-400/40 rounded-full pointer-events-none z-[9998] opacity-0 hidden md:block bg-amber-500/10 backdrop-blur-[0.5px]"></div>
+
+  <script>
+    // ---------------------------------------------------------------
+    // 1. GSAP Entrance Animations & Interactive 3D Parallax
+    // ---------------------------------------------------------------
+    window.addEventListener('DOMContentLoaded', () => {
+      const modelImg = document.getElementById('hero-model-img');
+      const bgText = document.getElementById('giant-bg-text');
+      const modelStage = document.getElementById('model-stage');
+
+      if (window.gsap) {
+        const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+        tl.from('.gs-hero-left', { opacity: 0, y: 30, duration: 1, delay: 0.15 })
+          .from('.gs-hero-right', { opacity: 0, y: 30, duration: 1 }, '-=0.8')
+          .from('#giant-bg-text', { opacity: 0, scale: 1.08, duration: 1.2 }, '-=1')
+          .from('.gs-model-container', { opacity: 0, y: 50, scale: 0.98, duration: 1.1 }, '-=1')
+          .from('.gs-hero-bottom-left', { opacity: 0, y: 20, duration: 0.8 }, '-=0.7')
+          .from('.gs-hero-bottom-right', { opacity: 0, y: 20, duration: 0.8 }, '-=0.8');
+
+        // Mouse Parallax (Layered 3D Depth)
+        window.addEventListener('mousemove', (e) => {
+          const xPos = (e.clientX / innerWidth - 0.5) * 2;
+          const yPos = (e.clientY / innerHeight - 0.5) * 2;
+          gsap.to(modelStage, { x: xPos * 14, y: yPos * 8, duration: 0.7, ease: 'power1.out' });
+          gsap.to(bgText, { x: -xPos * 25, y: -yPos * 8, duration: 0.9, ease: 'power1.out' });
+        });
+      }
+
+      // Initialize Typewriter Effect & Custom Cursor
+      initTypewriter();
+      initCustomCursor();
+    });
+
+    // ---------------------------------------------------------------
+    // 2. Typewriter Effect for "CREATIVE STUDIO" (Requirement 3)
+    // ---------------------------------------------------------------
+    function initTypewriter() {
+      const fullText = "PixelCraft is a web-based image studio that treats color as craft. Built for creators who want every edit to feel intentional — from first adjustment to final export.";
+      const target = document.getElementById('typed-text');
+      const cursor = document.getElementById('typed-cursor');
+      if (!target) return;
+
+      let idx = 0;
+      target.textContent = "";
+
+      function typeChar() {
+        if (idx < fullText.length) {
+          target.textContent += fullText.charAt(idx);
+          const ch = fullText.charAt(idx);
+          idx++;
+          let delay = 20;
+          if (ch === '.' || ch === '—') delay = 220;
+          else if (ch === ',') delay = 110;
+          setTimeout(typeChar, delay);
+        } else {
+          // Keep cursor blinking for 2.5s then fade out gracefully
+          setTimeout(() => {
+            if (cursor) cursor.style.opacity = '0';
+          }, 2500);
+        }
+      }
+      setTimeout(typeChar, 600);
+    }
+
+    // ---------------------------------------------------------------
+    // 3. Smooth Custom Mouse Follower Div with Lerp Physics (Requirement 2)
+    // ---------------------------------------------------------------
+    function initCustomCursor() {
+      const cursorDot = document.getElementById('cursor-dot');
+      const cursorFollower = document.getElementById('cursor-follower');
+      if (!cursorDot || !cursorFollower) return;
+
+      let mouseX = -200, mouseY = -200;
+      let followerX = -200, followerY = -200;
+      let isHovered = false;
+      let isVisible = false;
+
+      window.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+
+        if (!isVisible) {
+          isVisible = true;
+          cursorDot.style.opacity = '1';
+          cursorFollower.style.opacity = '1';
+        }
+
+        cursorDot.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0) translate(-50%, -50%)`;
+      });
+
+      window.addEventListener('mouseleave', () => {
+        isVisible = false;
+        cursorDot.style.opacity = '0';
+        cursorFollower.style.opacity = '0';
+      });
+
+      function animateFollower() {
+        // Fluid Lerp / Lag physics (0.16 smoothing factor)
+        followerX += (mouseX - followerX) * 0.16;
+        followerY += (mouseY - followerY) * 0.16;
+
+        const scale = isHovered ? 1.75 : 1;
+        cursorFollower.style.transform = `translate3d(${followerX}px, ${followerY}px, 0) translate(-50%, -50%) scale(${scale})`;
+
+        if (isHovered) {
+          cursorFollower.style.borderColor = 'rgba(255, 255, 255, 0.85)';
+          cursorFollower.style.backgroundColor = 'rgba(224, 138, 60, 0.22)';
+          cursorFollower.style.boxShadow = '0 0 20px rgba(245, 158, 11, 0.45)';
+        } else {
+          cursorFollower.style.borderColor = 'rgba(224, 138, 60, 0.4)';
+          cursorFollower.style.backgroundColor = 'rgba(224, 138, 60, 0.08)';
+          cursorFollower.style.boxShadow = 'none';
+        }
+
+        requestAnimationFrame(animateFollower);
+      }
+      requestAnimationFrame(animateFollower);
+
+      // Interactive hover scaling on buttons, links and cards
+      const interactives = document.querySelectorAll('a, button, input, .glass-amber, .glass-white, .glass-dark, .sample-pick-btn');
+      interactives.forEach(el => {
+        el.addEventListener('mouseenter', () => isHovered = true);
+        el.addEventListener('mouseleave', () => isHovered = false);
+      });
+    }
+
+    // ---------------------------------------------------------------
+    // 4. Playground filter engine
+    // ---------------------------------------------------------------
+    const pgImg = document.getElementById('playground-viewport-img');
+    const pgSliders = {
+      b: document.getElementById('pg-brightness'), c: document.getElementById('pg-contrast'),
+      s: document.getElementById('pg-saturation'), h: document.getElementById('pg-huerotate'),
+      sp: document.getElementById('pg-sepia')
+    };
+    const pgTags = {
+      b: document.getElementById('pg-val-brightness'), c: document.getElementById('pg-val-contrast'),
+      s: document.getElementById('pg-val-saturation'), h: document.getElementById('pg-val-huerotate'),
+      sp: document.getElementById('pg-val-sepia')
+    };
+
+    function updatePlayground() {
+      if (!pgImg) return;
+      const { b, c, s, h, sp } = Object.fromEntries(Object.entries(pgSliders).map(([k, v]) => [k, v.value]));
+      pgImg.style.filter = `brightness(${b}%) contrast(${c}%) saturate(${s}%) hue-rotate(${h}deg) sepia(${sp}%)`;
+      pgTags.b.textContent = `${b}%`; pgTags.c.textContent = `${c}%`; pgTags.s.textContent = `${s}%`;
+      pgTags.h.textContent = `${h}°`; pgTags.sp.textContent = `${sp}%`;
+    }
+    Object.values(pgSliders).forEach(sl => sl && sl.addEventListener('input', updatePlayground));
+
+    document.getElementById('pg-reset-btn').addEventListener('click', () => {
+      pgSliders.b.value = 100; pgSliders.c.value = 100; pgSliders.s.value = 100; pgSliders.h.value = 0; pgSliders.sp.value = 0;
+      updatePlayground();
+    });
+
+    function applyPlaygroundPreset(type) {
+      const presets = {
+        noir: [95, 140, 0, 0, 0],
+        warm: [110, 115, 135, 15, 25],
+        cyber: [105, 130, 170, 280, 0]
+      };
+      const p = presets[type]; if (!p) return;
+      pgSliders.b.value = p[0]; pgSliders.c.value = p[1]; pgSliders.s.value = p[2]; pgSliders.h.value = p[3]; pgSliders.sp.value = p[4];
+      updatePlayground();
+    }
+
+    document.querySelectorAll('.sample-pick-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.sample-pick-btn').forEach(b => {
+          b.classList.remove('active', 'border-amber-400', 'scale-105', 'border-2');
+          b.classList.add('border-white/20', 'border');
+        });
+        btn.classList.add('active', 'border-amber-400', 'scale-105', 'border-2');
+        btn.classList.remove('border-white/20', 'border');
+        const src = btn.getAttribute('data-src');
+        if (pgImg && src) pgImg.src = src;
+      });
+    });
+  </script>
+</body>
+
+</html>

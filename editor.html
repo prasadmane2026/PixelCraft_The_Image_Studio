@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PixelCraft Studio — Full Editor Workspace</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%23e08a3c'/><text x='50%' y='68%' font-size='60' font-weight='900' fill='white' text-anchor='middle' font-family='sans-serif'>C</text></svg>">
+
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Remix Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.9.0/fonts/remixicon.css" rel="stylesheet" />
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./variables.css">
+
+  <style>
+    /* Top Studio Header (Matches Landing Page Theme) */
+    .studio-header-nav {
+      width: 100%;
+      height: 64px;
+      background: rgba(16, 10, 6, 0.78);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 var(--padding-xl);
+    }
+
+    .studio-back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: rgba(255, 255, 255, 0.75);
+      text-decoration: none;
+      font-size: var(--font-size-sm);
+      font-weight: 600;
+      padding: 7px 14px;
+      border-radius: var(--border-radius-sm);
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      transition: all 0.2s ease;
+    }
+
+    .studio-back-link:hover {
+      background: rgba(255, 255, 255, 0.14);
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .studio-brand-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 1.05rem;
+      text-decoration: none;
+      letter-spacing: -0.01em;
+    }
+
+    .studio-brand-dot {
+      width: 10px;
+      height: 10px;
+      background: #e08a3c;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #e08a3c;
+    }
+
+    .preset-chips-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      margin-bottom: var(--margin-md);
+      scrollbar-width: none;
+    }
+
+    .preset-chips-row::-webkit-scrollbar {
+      display: none;
+    }
+
+    .preset-chip-btn {
+      padding: 5px 12px;
+      border-radius: var(--border-radius-sm);
+      background: rgba(255, 255, 255, 0.05);
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 0.78rem;
+      font-weight: 700;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+    }
+
+    .preset-chip-btn:hover {
+      background: #e08a3c;
+      color: #0b0705;
+      border-color: #e08a3c;
+      box-shadow: 0 0 10px rgba(224, 138, 60, 0.5);
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Studio Top Bar -->
+  <header class="studio-header-nav">
+    <div style="display: flex; align-items: center; gap: 16px;">
+      <a href="./index.html" class="studio-back-link">
+        <i class="ri-arrow-left-line"></i>
+        <span>Back to Landing Page</span>
+      </a>
+
+      <div class="studio-brand-title">
+        <span class="studio-brand-dot"></span>
+        <span>Pixel<span style="color:#e08a3c;">Craft</span> Studio Workspace</span>
+      </div>
+    </div>
+
+    <div>
+      <a href="./index.html#faq" class="studio-back-link">
+        <i class="ri-question-line"></i> Help
+      </a>
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <div class="left">
+        <div class="top">
+          <label for="image-input" class="btn" id="choose-image">
+            <i class="ri-upload-2-line"></i> Choose Image
+            <input type="file" id="image-input" accept="image/*" hidden>
+          </label>
+          <button class="btn btn-secondary" id="compare-btn" title="Hold down or press Space to view original unedited image">
+            <i class="ri-eye-line"></i> Hold to Compare
+          </button>
+          <button class="btn btn-secondary" id="rotate-btn" title="Rotate 90° Clockwise">
+            <i class="ri-clockwise-line"></i> Rotate
+          </button>
+          <button class="btn btn-secondary" id="flip-btn" title="Flip Horizontal">
+            <i class="ri-swap-line"></i> Flip H
+          </button>
+          <button class="btn" id="reset-btn"><i class="ri-refresh-line"></i> Reset</button>
+          <button class="btn" id="download-btn"><i class="ri-download-2-line"></i> Download</button>
+        </div>
+
+        <div class="bottom">
+          <div class="placeholder">
+            <i class="ri-image-add-line"></i>
+            <p>No image Chosen</p>
+            <span style="font-size: 0.85rem; font-weight: 400; opacity: 0.7;">Select any JPG, PNG, or WebP to edit</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <h2>Filters</h2>
+          <span style="font-size: 0.75rem; color: #e08a3c; font-weight: 700; text-transform: uppercase;">GPU Active</span>
+        </div>
+
+        <!-- Quick Presets -->
+        <div class="preset-chips-row">
+          <button class="preset-chip-btn" onclick="applyStudioPreset('default')">Default</button>
+          <button class="preset-chip-btn" onclick="applyStudioPreset('vintage')">Vintage 70s</button>
+          <button class="preset-chip-btn" onclick="applyStudioPreset('bw')">B&amp;W Noir</button>
+          <button class="preset-chip-btn" onclick="applyStudioPreset('warm')">Warm Sun</button>
+          <button class="preset-chip-btn" onclick="applyStudioPreset('cyber')">Cyberpunk</button>
+        </div>
+
+        <!-- Injected Filters -->
+        <div class="filters" id="filters-container">
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="./script.js"></script>
+  <script>
+    function applyStudioPreset(name) {
+      if (!uploadedImage) {
+        alert("Please choose an image first!");
+        return;
+      }
+
+      const setVal = (id, val) => {
+        const inp = document.getElementById(id);
+        const sp = document.getElementById(`${id}-value`);
+        if (inp && filters[id]) {
+          inp.value = val;
+          if (sp) sp.textContent = `${val}${filters[id].unitvalue}`;
+        }
+      };
+
+      for (const [key, config] of Object.entries(filters)) {
+        setVal(key, config.value);
+      }
+
+      if (name === 'vintage') {
+        setVal('sepia', 55);
+        setVal('contrast', 115);
+        setVal('brightness', 105);
+        setVal('saturation', 85);
+      } else if (name === 'bw') {
+        setVal('grayScale', 100);
+        setVal('contrast', 130);
+        setVal('brightness', 95);
+      } else if (name === 'warm') {
+        setVal('sepia', 25);
+        setVal('saturation', 130);
+        setVal('brightness', 110);
+      } else if (name === 'cyber') {
+        setVal('huerotation', 290);
+        setVal('saturation', 170);
+        setVal('contrast', 125);
+      }
+
+      updateImageFilters();
+    }
+
+    // ---------------------------------------------------------------
+    // Smooth Custom Mouse Follower & Parallax Animation
+    // ---------------------------------------------------------------
+    function initCustomCursor() {
+      const cursorDot = document.getElementById('cursor-dot');
+      const cursorFollower = document.getElementById('cursor-follower');
+      if (!cursorDot || !cursorFollower) return;
+
+      let mouseX = -200, mouseY = -200;
+      let followerX = -200, followerY = -200;
+      let isHovered = false;
+      let isVisible = false;
+
+      const bottomBox = document.querySelector('main section .bottom');
+      const rightPanel = document.querySelector('main section .right');
+
+      window.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+
+        if (!isVisible) {
+          isVisible = true;
+          cursorDot.style.opacity = '1';
+          cursorFollower.style.opacity = '1';
+        }
+
+        cursorDot.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0) translate(-50%, -50%)`;
+
+        // Subtle mouse parallax tilt on canvas container & panel (matching landing page depth)
+        const xOffset = (e.clientX / window.innerWidth - 0.5) * 2;
+        const yOffset = (e.clientY / window.innerHeight - 0.5) * 2;
+
+        if (bottomBox) {
+          bottomBox.style.transform = `perspective(1000px) rotateY(${xOffset * 1.8}deg) rotateX(${-yOffset * 1.5}deg)`;
+        }
+        if (rightPanel) {
+          rightPanel.style.transform = `perspective(1000px) rotateY(${xOffset * 1.2}deg) rotateX(${-yOffset * 1.0}deg)`;
+        }
+      });
+
+      window.addEventListener('mouseleave', () => {
+        isVisible = false;
+        cursorDot.style.opacity = '0';
+        cursorFollower.style.opacity = '0';
+        if (bottomBox) bottomBox.style.transform = 'none';
+        if (rightPanel) rightPanel.style.transform = 'none';
+      });
+
+      function animateFollower() {
+        followerX += (mouseX - followerX) * 0.16;
+        followerY += (mouseY - followerY) * 0.16;
+
+        const scale = isHovered ? 1.6 : 1;
+        cursorFollower.style.transform = `translate3d(${followerX}px, ${followerY}px, 0) translate(-50%, -50%) scale(${scale})`;
+
+        if (isHovered) {
+          cursorFollower.style.borderColor = 'rgba(255, 255, 255, 0.9)';
+          cursorFollower.style.backgroundColor = 'rgba(224, 138, 60, 0.22)';
+          cursorFollower.style.boxShadow = '0 0 20px rgba(245, 158, 11, 0.5)';
+        } else {
+          cursorFollower.style.borderColor = 'rgba(224, 138, 60, 0.45)';
+          cursorFollower.style.backgroundColor = 'rgba(224, 138, 60, 0.08)';
+          cursorFollower.style.boxShadow = 'none';
+        }
+
+        requestAnimationFrame(animateFollower);
+      }
+      requestAnimationFrame(animateFollower);
+
+      // Attach hover listeners for interactive elements
+      const setupHoverListeners = () => {
+        const interactives = document.querySelectorAll('a, button, input, label, .filter, .preset-chip-btn, .btn');
+        interactives.forEach(el => {
+          el.addEventListener('mouseenter', () => isHovered = true);
+          el.addEventListener('mouseleave', () => isHovered = false);
+        });
+      };
+
+      setupHoverListeners();
+      setTimeout(setupHoverListeners, 400);
+    }
+
+    document.addEventListener('DOMContentLoaded', initCustomCursor);
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      initCustomCursor();
+    }
+  </script>
+
+  <!-- Smooth Custom Mouse Follower Divs -->
+  <div id="cursor-dot"></div>
+  <div id="cursor-follower"></div>
+</body>
+
+</html>

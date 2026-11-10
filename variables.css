@@ -1,0 +1,52 @@
+:root {
+    /* Warm Cinematic Studio Palette (Matching Landing Page Theme) */
+    --bg-primary-color: #0c0805;
+    --bg-secondary-color: rgba(24, 15, 10, 0.88);
+    --bg-panel-color: rgba(30, 18, 12, 0.95);
+    --bg-active-color: #e08a3c;
+    --bg-accent-wine: #881337;
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-amber: rgba(245, 158, 11, 0.22);
+
+    /* paddings variables */
+    --padding-sm: 0.5rem;
+    --padding-md: 0.85rem;
+    --padding-lg: 1.25rem;
+    --padding-xl: 1.75rem;
+    --padding-2xl: 2.5rem;
+
+    /* margin */
+    --margin-sm: 0.5rem;
+    --margin-md: 0.75rem;
+    --margin-lg: 1.25rem;
+    --margin-xl: 1.75rem;
+    --margin-2xl: 2.5rem;
+
+    /* Border radius */
+    --border-radius-sm: 0.6rem;
+    --border-radius-md: 0.85rem;
+    --border-radius-lg: 1.25rem;
+    --border-radius-xl: 1.75rem;
+    --border-radius-2xl: 2.5rem;
+
+    /* Font size */
+    --font-size-sm: 0.8125rem;
+    --font-size-md: 0.9rem;
+    --font-size-lg: 1.05rem;
+    --font-size-xl: 1.25rem;
+    --font-size-2xl: 1.5rem;
+    --font-size-3xl: 2rem;
+
+    /* text colors */
+    --text-primary-color: #ffffff;
+    --text-seconday-color: rgba(255, 255, 255, 0.75);
+    --text-ternary-color: rgba(255, 255, 255, 0.45);
+    --text-active-color: #0c0805;
+
+    /* gutter */
+    --gutter-sm: 0.5rem;
+    --gutter-md: 0.85rem;
+    --gutter-lg: 1.25rem;
+    --gutter-xl: 1.75rem;
+    --gutter-2xl: 2.5rem;
+}
